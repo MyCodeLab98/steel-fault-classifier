@@ -5,3 +5,4 @@ pandas==2.2.3
 matplotlib
 seaborn
 joblib
+pyarrow==17.0.0
