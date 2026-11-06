@@ -27,5 +27,5 @@ for name in ["naive_bayes", "svm"]:
     m = joblib.load(f"model/{name}.joblib")
     print(f"\n{name}\n", classification_report(y_te, m.predict(X_te), zero_division=0))
 
-knn_raw = KNeighborsClassifier(n_neighbors=5).fit(X_tr, y_tr)
+knn_raw = KNeighborsClassifier(n_neighbors=7,weights="distance",p=1).fit(X_tr, y_tr)
 print("KNN without scaling, test accuracy:", round(knn_raw.score(X_te, y_te), 4))
