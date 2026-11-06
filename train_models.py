@@ -17,12 +17,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-SEED = 17          # change to your own number before running
+SEED = 17          
 TARGET = "Fault"
 MODEL_DIR = Path("model")
 
 
-# ---------- Part 1: load data, stratified split, save test CSV ----------
+# Load data ; split and save to csv
 df = pd.read_csv("steel_plates_full.csv")
 X = df.drop(columns=[TARGET])
 y = df[TARGET]
@@ -38,9 +38,8 @@ test_df[TARGET] = y_test
 test_df.to_csv("test_data.csv", index=False)
 
 
-# ---------- Part 2: the five models ----------
-# Scaler lives inside the pipeline for distance/gradient-based models,
-# so the saved file applies the training-set scaling automatically.
+# Apply mentioned 5 models
+
 models = {
     "Logistic Regression": make_pipeline(StandardScaler(),
                                          LogisticRegression(max_iter=2000)),
@@ -53,7 +52,7 @@ models = {
 }
 
 
-# ---------- Part 3: the six metrics ----------
+# Apply 6 metric
 def evaluate(model, X_eval, y_eval):
     pred = model.predict(X_eval)
     proba = model.predict_proba(X_eval)
@@ -68,7 +67,7 @@ def evaluate(model, X_eval, y_eval):
     }
 
 
-# ---------- Part 4: train, evaluate, save ----------
+# Train , evaluate and test
 MODEL_DIR.mkdir(exist_ok=True)
 rows = []
 for name, model in models.items():
