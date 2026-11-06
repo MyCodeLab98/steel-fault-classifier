@@ -1,6 +1,5 @@
 """
-Train five classifiers on the Steel Plates Faults dataset (UCI id 198),
-evaluate them on a held-out test split, and save the fitted pipelines.
+Train five classifiers on the Steel Plates Faults dataset 
 """
 from pathlib import Path
 
@@ -13,7 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import PowerTransformer, StandardScaler
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
@@ -22,7 +21,7 @@ TARGET = "Fault"
 MODEL_DIR = Path("model")
 
 
-# Load data ; split and save to csv
+#Load data , split and save csv
 df = pd.read_csv("steel_plates_full.csv")
 X = df.drop(columns=[TARGET])
 y = df[TARGET]
@@ -38,21 +37,27 @@ test_df[TARGET] = y_test
 test_df.to_csv("test_data.csv", index=False)
 
 
-# Apply mentioned 5 models
-
+# 5 given models to train dataset ; tuned and selected best possible parameters - check tune* python files
 models = {
+    # tune_lr.py: default C=1 was best; balanced class weights hurt
     "Logistic Regression": make_pipeline(StandardScaler(),
-                                         LogisticRegression(max_iter=2000)),
-    "Decision Tree": DecisionTreeClassifier(random_state=SEED),
+                                         LogisticRegression(C=1, max_iter=2000)),
+    # tune_tree.py: entropy splits beat gini; depth 12 + leaf 3 is simpler and more stable
+    "Decision Tree": DecisionTreeClassifier(criterion="entropy", max_depth=12,
+                                            min_samples_leaf=3, random_state=SEED),
+    # tune_knn.py: Manhattan distance (p=1) + distance weighting; k=7 for stability
     "KNN": make_pipeline(StandardScaler(),
-                         KNeighborsClassifier(n_neighbors=5)),
-    "Naive Bayes": GaussianNB(),
+                         KNeighborsClassifier(n_neighbors=7, weights="distance", p=1)),
+    # tune_nb.py: PowerTransformer makes skewed features bell-shaped for GaussianNB
+    "Naive Bayes": make_pipeline(PowerTransformer(), GaussianNB()),
+    # tune_svm.py: C=10, gamma=0.1 best and stable; probability=True needed for AUC
     "SVM": make_pipeline(StandardScaler(),
-                         SVC(kernel="rbf", probability=True, random_state=SEED)),
+                         SVC(kernel="rbf", C=10, gamma=0.1, probability=True,
+                             random_state=SEED)),
 }
 
 
-# Apply 6 metric
+# Evaluate with mentioned 6 metrics 
 def evaluate(model, X_eval, y_eval):
     pred = model.predict(X_eval)
     proba = model.predict_proba(X_eval)
@@ -67,7 +72,7 @@ def evaluate(model, X_eval, y_eval):
     }
 
 
-# Train , evaluate and test
+# Train evaluate and save
 MODEL_DIR.mkdir(exist_ok=True)
 rows = []
 for name, model in models.items():
